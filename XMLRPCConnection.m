@@ -197,6 +197,7 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite;
 
 - (void)connectionDidFinishLoading: (NSURLConnection *)connection {
     if (myData && ([myData length] > 0)) {
+        [myDelegate request:myRequest didReceiveRawResponse:myData];
 #if ! __has_feature(objc_arc)
         XMLRPCResponse *response = [[[XMLRPCResponse alloc] initWithData: myData] autorelease];
         XMLRPCRequest *request = [[myRequest retain] autorelease];

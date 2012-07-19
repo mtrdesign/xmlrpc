@@ -6,6 +6,7 @@
 
 @required
 - (void)request: (XMLRPCRequest *)request didReceiveResponse: (XMLRPCResponse *)response;
+- (void)request:(XMLRPCRequest *)request didReceiveRawResponse: (NSData *)rawResponse;
 
 @optional
 - (void)request: (XMLRPCRequest *)request didSendBodyData: (float)percent;
