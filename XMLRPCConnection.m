@@ -66,10 +66,7 @@ static NSOperationQueue *parsingQueue;
         if (myConnection) {
             NSLog(@"The connection, %@, has been established!", myIdentifier);
 
-            myTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:[myRequest timeout] target:self selector:@selector(timeoutExpired) userInfo:nil repeats:NO];
-#if ! __has_feature(objc_arc)
-            [myTimeoutTimer retain];
-#endif
+            [self performSelector:@selector(timeoutExpired) withObject:nil afterDelay:[myRequest timeout]];
         } else {
             NSLog(@"The connection, %@, could not be established!", myIdentifier);
 #if ! __has_feature(objc_arc)
@@ -127,6 +124,8 @@ static NSOperationQueue *parsingQueue;
 
 - (void)cancel {
     [myConnection cancel];
+
+    [self invalidateTimer];
 }
 
 #pragma mark -
@@ -139,9 +138,6 @@ static NSOperationQueue *parsingQueue;
     [myData release];
     [myConnection release];
     [myDelegate release];
-    if ([myTimeoutTimer isValid]) {
-        [self invalidateTimer];
-    }
     
     [super dealloc];
 #endif
@@ -244,26 +240,21 @@ static NSOperationQueue *parsingQueue;
 #pragma mark -
 - (void)timeoutExpired
 {
-    [myConnection cancel];
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                              [myRequest URL], NSURLErrorFailingURLErrorKey,
+                              [[myRequest URL] absoluteString], NSURLErrorFailingURLStringErrorKey,
+                              //TODO not good to use hardcoded value for localized description
+                              @"The request timed out.", NSLocalizedDescriptionKey,
+                              nil];
 
-    //FIXME add some userinfo
-    NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:kCFURLErrorTimedOut userInfo:nil];
+    NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorTimedOut userInfo:userInfo];
 
-    [myDelegate request:myRequest didFailWithError:error];
-
-#if ! __has_feature(objc_arc)
-    [myTimeoutTimer release];
-#endif
-    myTimeoutTimer = nil;
+    [self connection:myConnection didFailWithError:error];
 }
 
 - (void)invalidateTimer
 {
-    [myTimeoutTimer invalidate];
-#if ! __has_feature(objc_arc)
-    [myTimeoutTimer release];
-#endif
-    myTimeoutTimer = nil;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeoutExpired) object:nil];
 }
 
 #pragma mark -
