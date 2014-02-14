@@ -166,6 +166,8 @@
         [self setElementType: XMLRPCElementTypeDate];
     } else if ([element isEqualToString: @"base64"]) {
         [self setElementType: XMLRPCElementTypeData];
+    } else if ([element isEqualToString: @"nil"]) {
+        [self setElementType: XMLRPCElementTypeNull];
     }
 }
 
@@ -173,7 +175,9 @@
     if ([element isEqualToString: @"value"] || [element isEqualToString: @"member"] || [element isEqualToString: @"name"]) {
         NSString *elementValue = nil;
         
-        if ((myElementType != XMLRPCElementTypeArray) && ![self isDictionaryElementType: myElementType]) {
+        if (myElementType == XMLRPCElementTypeNull) {
+            myElementValue = [NSNull null];
+        } else if ((myElementType != XMLRPCElementTypeArray) && ![self isDictionaryElementType: myElementType]) {
             elementValue = [self parseString: myElementValue];
 #if ! __has_feature(objc_arc)
             [myElementValue release];
@@ -244,7 +248,7 @@
 }
 
 - (void)parser: (NSXMLParser *)parser foundCharacters: (NSString *)string {
-    if ((myElementType == XMLRPCElementTypeArray) || [self isDictionaryElementType: myElementType]) {
+    if ((myElementType == XMLRPCElementTypeNull) || (myElementType == XMLRPCElementTypeArray) || [self isDictionaryElementType: myElementType]) {
         return;
     }
     
