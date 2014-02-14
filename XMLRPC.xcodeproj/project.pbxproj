@@ -628,6 +628,7 @@
 					"$(inherited)",
 					"\"$(DEVELOPER_FRAMEWORKS_DIR)\"",
 				);
+				SDKROOT = macosx;
 				VERSION_INFO_FILE = "";
 			};
 			name = Development;
@@ -642,6 +643,7 @@
 					"$(inherited)",
 					"\"$(DEVELOPER_FRAMEWORKS_DIR)\"",
 				);
+				SDKROOT = macosx;
 				VERSION_INFO_FILE = "";
 			};
 			name = Release;
@@ -652,6 +654,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COMBINE_HIDPI_IMAGES = YES;
+				SDKROOT = macosx;
 				VERSION_INFO_FILE = "";
 			};
 			name = Development;
@@ -662,6 +665,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COMBINE_HIDPI_IMAGES = YES;
+				SDKROOT = macosx;
 				VERSION_INFO_FILE = "";
 			};
 			name = Release;
