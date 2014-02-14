@@ -42,7 +42,7 @@
         myElementKey = nil;
         myElementValue = [[NSMutableString alloc] init];
     }
-    
+
     return self;
 }
 
@@ -53,7 +53,7 @@
     [parent retain];
     [myParent release];
 #endif
-    
+
     myParent = parent;
 }
 
@@ -78,7 +78,7 @@
     [elementKey retain];
     [myElementKey release];
 #endif
-    
+
     myElementKey = elementKey;
 }
 
@@ -93,7 +93,7 @@
     [elementValue retain];
     [myElementValue release];
 #endif
-    
+
     myElementValue = elementValue;
 }
 
@@ -108,7 +108,7 @@
     [myChildren release];
     [myElementKey release];
     [myElementValue release];
-    
+
     [super dealloc];
 #endif
 }
@@ -122,25 +122,25 @@
 - (void)parser: (NSXMLParser *)parser didStartElement: (NSString *)element namespaceURI: (NSString *)namespaceURI qualifiedName: (NSString *)qualifiedName attributes: (NSDictionary *)attributes {
     if ([element isEqualToString: @"value"] || [element isEqualToString: @"member"] || [element isEqualToString: @"name"]) {
         XMLRPCEventBasedParserDelegate *parserDelegate = [[XMLRPCEventBasedParserDelegate alloc] initWithParent: self];
-        
+
         if ([element isEqualToString: @"member"]) {
             [parserDelegate setElementType: XMLRPCElementTypeMember];
         } else if ([element isEqualToString: @"name"]) {
             [parserDelegate setElementType: XMLRPCElementTypeName];
         }
-        
+
         [myChildren addObject: parserDelegate];
-        
+
         [parser setDelegate: parserDelegate];
 #if ! __has_feature(objc_arc)
         [parserDelegate release];
 #endif
         return;
     }
-    
+
     if ([element isEqualToString: @"array"]) {
         NSMutableArray *array = [[NSMutableArray alloc] init];
-        
+
         [self setElementValue: array];
 #if ! __has_feature(objc_arc)
         [array release];
@@ -148,7 +148,7 @@
         [self setElementType: XMLRPCElementTypeArray];
     } else if ([element isEqualToString: @"struct"]) {
         NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
-        
+
         [self setElementValue: dictionary];
 #if ! __has_feature(objc_arc)
         [dictionary release];
@@ -174,7 +174,7 @@
 - (void)parser: (NSXMLParser *)parser didEndElement: (NSString *)element namespaceURI: (NSString *)namespaceURI qualifiedName: (NSString *)qualifiedName {
     if ([element isEqualToString: @"value"] || [element isEqualToString: @"member"] || [element isEqualToString: @"name"]) {
         NSString *elementValue = nil;
-        
+
         if (myElementType == XMLRPCElementTypeNull) {
             myElementValue = [NSNull null];
         } else if ((myElementType != XMLRPCElementTypeArray) && ![self isDictionaryElementType: myElementType]) {
@@ -184,7 +184,7 @@
 #endif
             myElementValue = nil;
         }
-        
+
         switch (myElementType) {
             case XMLRPCElementTypeInteger:
                 myElementValue = [self parseInteger: elementValue];
@@ -226,11 +226,11 @@
             default:
                 break;
         }
-        
+
         if (myParent && myElementValue) {
             [self addElementValueToParent];
         }
-        
+
         [parser setDelegate: myParent];
 
         if (myParent) {
@@ -251,7 +251,7 @@
     if ((myElementType == XMLRPCElementTypeNull) || (myElementType == XMLRPCElementTypeArray) || [self isDictionaryElementType: myElementType]) {
         return;
     }
-    
+
     if (!myElementValue) {
         myElementValue = [[NSMutableString alloc] initWithString: string];
     } else {
@@ -273,7 +273,7 @@
     if ((myElementType == XMLRPCElementTypeDictionary) || (myElementType == XMLRPCElementTypeMember)) {
         return YES;
     }
-    
+
     return NO;
 }
 
@@ -281,19 +281,15 @@
 
 - (void)addElementValueToParent {
     id parentElementValue = [myParent elementValue];
-    
+
     switch ([myParent elementType]) {
         case XMLRPCElementTypeArray:
             [parentElementValue addObject: myElementValue];
-            
+
             break;
         case XMLRPCElementTypeDictionary:
-            if ([myElementValue isEqual:[NSNull null]]) {
-                [parentElementValue removeObjectForKey:myElementKey];
-            } else {
-                [parentElementValue setObject: myElementValue forKey: myElementKey];
-            }
-            
+            [parentElementValue setObject: myElementValue forKey: myElementKey];
+
             break;
         case XMLRPCElementTypeMember:
             if (myElementType == XMLRPCElementTypeName) {
@@ -301,7 +297,7 @@
             } else {
                 [myParent setElementValue: myElementValue];
             }
-            
+
             break;
         default:
             break;
@@ -313,9 +309,9 @@
 - (NSDate *)parseDateString: (NSString *)dateString withFormat: (NSString *)format {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     NSDate *result = nil;
-    
+
     [dateFormatter setDateFormat: format];
-    
+
     result = [dateFormatter dateFromString: dateString];
 #if ! __has_feature(objc_arc)
     [dateFormatter release];
@@ -337,7 +333,7 @@
     if ([value isEqualToString: @"1"]) {
         return [NSNumber numberWithBool: YES];
     }
-    
+
     return [NSNumber numberWithBool: NO];
 }
 
@@ -347,13 +343,13 @@
 
 - (NSDate *)parseDate: (NSString *)value {
     NSDate *result = nil;
-    
+
     result = [self parseDateString: value withFormat: @"yyyyMMdd'T'HH:mm:ss"];
-    
+
     if (!result) {
         result = [self parseDateString: value withFormat: @"yyyy'-'MM'-'dd'T'HH:mm:ss"];
     }
-    
+
     if (!result) {
         result = (NSDate *)[NSNull null];
     }
