@@ -16,6 +16,10 @@
             <name>Age</name>
             <value><i4>25</i4></value>
           </member>
+          <member>
+            <name>Nothing</name>
+            <value><nil/></value>
+          </member>
         </struct>
       </value>
     </param>
