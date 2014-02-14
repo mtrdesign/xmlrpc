@@ -22,6 +22,8 @@
 
 #pragma mark -
 
+- (NSString *)encodeNull;
+
 - (NSString *)encodeBoolean: (CFBooleanRef)boolean;
 
 - (NSString *)encodeNumber: (NSNumber *)number;
@@ -43,7 +45,7 @@
         myMethod = [[NSString alloc] init];
         myParameters = [[NSArray alloc] init];
     }
-    
+
     return self;
 }
 
@@ -51,26 +53,26 @@
 
 - (NSString *)encode {
     NSMutableString *buffer = [NSMutableString stringWithString: @"<?xml version=\"1.0\"?><methodCall>"];
-    
+
     [buffer appendFormat: @"<methodName>%@</methodName>", [self encodeString: myMethod omitTag: YES]];
-    
+
     [buffer appendString: @"<params>"];
-    
+
     if (myParameters) {
         NSEnumerator *enumerator = [myParameters objectEnumerator];
         id parameter = nil;
-        
+
         while ((parameter = [enumerator nextObject])) {
             [buffer appendString: @"<param>"];
             [buffer appendString: [self encodeObject: parameter]];
             [buffer appendString: @"</param>"];
         }
     }
-    
+
     [buffer appendString: @"</params>"];
-    
+
     [buffer appendString: @"</methodCall>"];
-    
+
     return buffer;
 }
 
@@ -81,17 +83,17 @@
     if (myMethod)    {
         [myMethod release];
     }
-    
+
     if (!method) {
         myMethod = nil;
     } else {
         myMethod = [method retain];
     }
-    
+
     if (myParameters) {
         [myParameters release];
     }
-    
+
     if (!parameters) {
         myParameters = nil;
     } else {
@@ -119,7 +121,7 @@
 #if ! __has_feature(objc_arc)
     [myMethod release];
     [myParameters release];
-    
+
     [super dealloc];
 #endif
 }
@@ -134,10 +136,14 @@
     return [NSString stringWithFormat: @"<value><%@>%@</%@></value>", tag, value, tag];
 }
 
+- (NSString *)emptyTag: (NSString *)tag {
+    return [NSString stringWithFormat: @"<value><%@/></value>", tag];
+}
+
 #pragma mark -
 
 - (NSString *)replaceTarget: (NSString *)target withValue: (NSString *)value inString: (NSString *)string {
-    return [[string componentsSeparatedByString: target] componentsJoinedByString: value];    
+    return [[string componentsSeparatedByString: target] componentsJoinedByString: value];
 }
 
 #pragma mark -
@@ -146,8 +152,10 @@
     if (!object) {
         return nil;
     }
-    
-    if ([object isKindOfClass: [NSArray class]]) {
+
+    if ([object isEqual: [NSNull null]]) {
+        return [self encodeNull];
+    } else if ([object isKindOfClass: [NSArray class]]) {
         return [self encodeArray: object];
     } else if ([object isKindOfClass: [NSDictionary class]]) {
         return [self encodeDictionary: object];
@@ -175,29 +183,29 @@
 - (NSString *)encodeArray: (NSArray *)array {
     NSMutableString *buffer = [NSMutableString string];
     NSEnumerator *enumerator = [array objectEnumerator];
-    
+
     [buffer appendString: @"<value><array><data>"];
-    
+
     id object = nil;
-    
+
     while (object = [enumerator nextObject]) {
         [buffer appendString: [self encodeObject: object]];
     }
-    
+
     [buffer appendString: @"</data></array></value>"];
-    
+
     return (NSString *)buffer;
 }
 
 - (NSString *)encodeDictionary: (NSDictionary *)dictionary {
     NSMutableString * buffer = [NSMutableString string];
     NSEnumerator *enumerator = [dictionary keyEnumerator];
-    
+
     [buffer appendString: @"<value><struct>"];
-    
+
     NSString *key = nil;
     NSObject *val;
-    
+
     while (key = [enumerator nextObject]) {
         [buffer appendString: @"<member>"];
         [buffer appendFormat: @"<name>%@</name>", [self encodeString: key omitTag: YES]];
@@ -211,13 +219,17 @@
 
         [buffer appendString: @"</member>"];
     }
-    
+
     [buffer appendString: @"</struct></value>"];
-    
+
     return (NSString *)buffer;
 }
 
 #pragma mark -
+
+- (NSString *)encodeNull {
+    return [self emptyTag: @"nil"];
+}
 
 - (NSString *)encodeBoolean: (CFBooleanRef)boolean {
     if (boolean == kCFBooleanTrue) {
@@ -229,7 +241,7 @@
 
 - (NSString *)encodeNumber: (NSNumber *)number {
     NSString *numberType = [NSString stringWithCString: [number objCType] encoding: NSUTF8StringEncoding];
-    
+
     if ([numberType isEqualToString: @"d"]) {
         return [self valueTag: @"double" value: [number stringValue]];
     } else {
@@ -245,7 +257,7 @@
     unsigned components = kCFCalendarUnitYear | kCFCalendarUnitMonth | kCFCalendarUnitDay | kCFCalendarUnitHour | kCFCalendarUnitMinute | kCFCalendarUnitSecond;
     NSDateComponents *dateComponents = [[NSCalendar currentCalendar] components: components fromDate: date];
     NSString *buffer = [NSString stringWithFormat: @"%.4ld%.2ld%.2ldT%.2ld:%.2ld:%.2ld", (long)[dateComponents year], (long)[dateComponents month], (long)[dateComponents day], (long)[dateComponents hour], (long)[dateComponents minute], (long)[dateComponents second], nil];
-    
+
     return [self valueTag: @"dateTime.iso8601" value: buffer];
 }
 
